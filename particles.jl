@@ -17,18 +17,18 @@ mutable struct Particle{N, T<:AbstractFloat}
     force::SVector{N, T}
 end
 
-function Particle{N, T<:AbstractFloat}(
+function Particle(
     mass::T,
     position::SVector{N,T},
-    velocity::SVector{N,T})
+    velocity::SVector{N,T}) where {N, T<:AbstractFloat}
 
   Particle(mass, position, velocity, zeros(SVector{N,T}))
 end
 
-function Particle{R, S, T, N}(
+function Particle(
     mass::R,
     position::SVector{N,S},
-    velocity::SVector{N,T})
+    velocity::SVector{N,T}) where {R, S, T, N}
 
   U = promote_type(R, S, T)
   if !(U <: AbstractFloat) U = typeof(1.0) end
@@ -41,14 +41,4 @@ function Particle(
     velocity)
 
   Particle(mass, SVector(position...), SVector(velocity...))
-end
-
-"""
-Plot recipe for particle vectors (trayectories or collections of particles)
-"""
-@recipe function f{N,T}(
-    arr::AbstractVector{Particle{N,T}},
-    args...)
-
-  tuple( map(p->convert(Tuple, p.position), arr), args...)
 end

@@ -1,34 +1,27 @@
-using StaticArrays, RecipesBase, Plots
-gr(show = :juno)
+using StaticArrays, LinearAlgebra, Makie, BenchmarkTools, AbstractPlotting
+using BSON: @save, @load
 
 include("particles.jl")
 include("simulation.jl")
 include("forcefields.jl")
 
+#=
 particles = [
   Particle(
-    6e24,
-    r .* (cos(θ), sin(θ)),
-    5e-7 * r^0.99 .* (-sin(θ), cos(θ)))
-  for θ = 0:0.1:2π for r = 1e6:1e6:1e8]
+    10000000*rand(),
+    100*r .* (cos(θ), sin(θ)),
+    0.05r .* (-sin(θ) + 0.1*rand(),cos(θ) + 0.1*rand()) .- 0.1*rand().*(cos(θ), sin(θ)))
+  for θ = 0:0.1:2π for r = 0.5:0.1:5]
+=#
+@load "particles.bson" particles
 
-for i in 1:10
-  for j in 1:1
-    step!(particles, gravitationalattraction, 100)
-  end
-  println(i)
-  display(scatter(
-    particles,
-    aspectratio=1,
-    xlims=(-2*10^8, 2*10^8),
-    ylims=(-2*10^8, 2*10^8),
-    legend=false))
-end
+scene = Scene(backgroundcolor = :black, limits = FRect(-5, -5, 5, 5))
+scatter!(scene, [p.position for p in particles],
+  glowwidth = 1, glowcolor = (:white, 0.1), color = :white,
+  markersize=[25*p.mass/10000000 for p in particles],
+  show_axis = true,
+  limits = FRect(-5, -5, 5, 5))
+scene
+sim(particles, gravitationalattraction, 0.1, 24)
 
-scatter(
-  particles,
-  aspectratio=1,
-  xlims=(-2*10^8, 2*10^8),
-  ylims=(-2*10^8, 2*10^8),
-  legend=false)
-  
+@save "./particles.bson" particles
