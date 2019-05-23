@@ -24,10 +24,11 @@ end
 
 function sim(
     particles::AbstractVector{Particle{N,T}},
-    forcefield,
-    dt::Number,
-    fps=24::Number;
-    markerscale=10) where {N, T<:AbstractFloat}
+    forcefield;
+    dt,
+    fps=24,
+    markerscale=10,
+    speedup=1.0) where {N, T<:AbstractFloat}
 
   for particle in particles
     particle.force = zeros(SVector{N,T})
@@ -39,19 +40,19 @@ function sim(
     particles[j].force += forces[2]
   end
 
-  frame_duration = 1.0/fps
-  @info frame_duration
   markersize = markerscale/maximum(p.mass for p in particles)
 
   scene = Scene(backgroundcolor = :black)
   scatter!(scene, [p.position for p in particles],
-    glowwidth = markerscale, glowcolor = (:white, 0.1), color = :white,
+    glowwidth = 2, glowcolor = (:white, 0.1), color = :white,
     markersize = [p.mass*markersize for p in particles],
-    show_axis = false,
-    limits = FRect(-10, -10, 20, 20))
+    show_axis = true,
+    transparency=true)
   display(scene)
 
-
+  frame_duration = 1.0/fps
+  Δt_sim_per_frame = frame_duration*speedup
+  @info Δt_sim_per_frame
   Δt_sim = 0
   t1 = time()
 
@@ -63,19 +64,19 @@ function sim(
     step!(particles, forcefield, dt)
 
     Δt_sim += dt
-    if Δt_sim > frame_duration
+    if Δt_sim > Δt_sim_per_frame
       push!(scene[end][1], [p.position for p in particles])
 
       t2 = time()
       diff = frame_duration - (t2 - t1)
 
       if diff > 0.0
-        @info diff
         sleep(diff)
       else
         yield()
       end
 
+      @info center_of_mass(particles)
       Δt_sim = 0
       t1 = t2
     end
