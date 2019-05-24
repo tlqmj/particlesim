@@ -6,21 +6,21 @@ include("simulation.jl")
 include("forcefields.jl")
 include("utils.jl")
 
-particles = plummer_sphere(500, 1.0, 10)
+particles = plummer_sphere(1000, 1.0, 15)
 particles = prune!(particles, 4avg_distance_from_cm(particles))
 
-particles2 = plummer_sphere(500, 1.0, 10)
+particles2 = plummer_sphere(1000, 2.0, 10)
 particles2 = prune!(particles2, 4avg_distance_from_cm(particles2))
 
 for p in particles2
-  p.position = p.position + SVector(80.0, 20.0, 50.0)
-  p.velocity = p.velocity - 0.0001*SVector(8.0, 2.0, 0.0)
+  p.position = p.position + SVector(80.0, 20.0, 20.0)
+  p.velocity = p.velocity - 0.05*SVector(8.0, 2.0, 0.0)
 end
 
 append!(particles, particles2)
 normalize_cm!(particles)
 
-sim(particles, gravitationalattraction, dt=0.1,
+sim(particles, softenedgravitationalattraction(0.05), dt=0.5,
     fps=10, speedup=5, limit_fps=false, save_video=false,
     markersize=0.5, glowwidth=20)
 
