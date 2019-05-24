@@ -2,3 +2,5 @@
 .ipynb_checkpoints
 Untitled.jl
 *.bson
+*.mkv
+*.mp4
