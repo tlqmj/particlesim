@@ -85,7 +85,7 @@ function sim(
 
     Δt_sim += dt
     if Δt_sim > Δt_sim_per_frame
-      push!(scene[end][1], [p.position for p in particles])
+      scene[end][1] = [p.position for p in particles]
       if save_video
         recordframe!(io)
       end
