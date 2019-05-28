@@ -11,6 +11,14 @@ function avg_distance_from_cm(particles::AbstractVector{Particle{N,T}}) where {N
     mean((norm(p.position - cm) for p in particles))
 end
 
+function angular_momentum(particle::Particle{N,T}) where {N,T}
+    return particle.mass*cross(particle.position, particle.velocity)
+end
+
+function angular_momentum(particles::AbstractVector{Particle{N,T}}) where {N,T}
+    return sum(angular_momentum(p) for p in particles)
+end
+
 function normalize_cm!(particles::AbstractVector{Particle{N,T}}) where {N,T}
     cm = center_of_mass(particles)
     v_cm = center_of_mass_velocity(particles)
