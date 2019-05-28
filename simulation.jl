@@ -13,7 +13,7 @@ function step!(
     particle.force     = zeros(SVector{N,T})
   end
 
-  for i=1:size(particles)[1], j=i+1:size(particles)[1]
+  for i=1:(size(particles)[1]-1), j=(i+1):size(particles)[1]
     forces = forcefield(particles[i], particles[j])
     particles[i].force += forces[1]
     particles[j].force += forces[2]
@@ -101,7 +101,7 @@ function sim(
 
       end
 
-      @info center_of_mass_velocity(particles)
+      @info angular_momentum(particles)
       Δt_sim = 0
     end
 
