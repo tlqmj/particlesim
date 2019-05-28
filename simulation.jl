@@ -131,8 +131,6 @@ function sim(
     end
 
     @info angular_momentum(particles)
-    Δt_sim = 0
-
   end
 end
 
