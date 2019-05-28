@@ -7,28 +7,23 @@ function step!(
     forcefield,
     dt::Real) where {N,T}
 
+  update_forces!(particles)
+
   for particle in particles
     particle.position += particle.velocity*dt
     particle.velocity += (particle.force/particle.mass)*dt
-    particle.force     = zeros(SVector{N,T})
-  end
-
-  for i=1:(size(particles)[1]-1), j=(i+1):size(particles)[1]
-    forces = forcefield(particles[i], particles[j])
-    particles[i].force += forces[1]
-    particles[j].force += forces[2]
   end
 
   return particles
 end
 
-function initialize_forces!(particles::AbstractVector{Particle{N,T}}, forcefield) where {N, T<:AbstractFloat}
+function update_forces!(particles::AbstractVector{Particle{N,T}}, forcefield) where {N, T<:AbstractFloat}
 
   for particle in particles
     particle.force = zeros(SVector{N,T})
   end
 
-  for i=1:size(particles,1), j=(i+1):size(particles,1)
+  for i=1:(size(particles, 1)-1), j=(i+1):size(particles, 1)
     forces = forcefield(particles[i], particles[j])
     particles[i].force += forces[1]
     particles[j].force += forces[2]
@@ -49,8 +44,6 @@ function sim(
     glowalpha=0.02,
     markersize=10,
     glowwidth=markersize) where {N, T<:AbstractFloat}
-
-  initialize_forces!(particles, forcefield)
 
   scene = Scene(backgroundcolor = :black)
   scatter!(scene, [p.position for p in particles],
