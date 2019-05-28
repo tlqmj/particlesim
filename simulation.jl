@@ -4,7 +4,7 @@ function update_forces!(particles::AbstractVector{Particle{N,T}}, forcefield) wh
     particle.force = zeros(SVector{N,T})
   end
 
-  for i=1:(size(particles, 1)-1), j=(i+1):size(particles, 1)
+  @inbounds for i=1:(size(particles, 1)-1), j=(i+1):size(particles, 1)
     forces = forcefield(particles[i], particles[j])
     particles[i].force += forces[1]
     particles[j].force += forces[2]
