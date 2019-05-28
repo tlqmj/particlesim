@@ -1,3 +1,19 @@
+function update_forces!(particles::AbstractVector{Particle{N,T}}, forcefield) where {N, T<:AbstractFloat}
+
+  for particle in particles
+    particle.force = zeros(SVector{N,T})
+  end
+
+  for i=1:(size(particles, 1)-1), j=(i+1):size(particles, 1)
+    forces = forcefield(particles[i], particles[j])
+    particles[i].force += forces[1]
+    particles[j].force += forces[2]
+  end
+
+  return nothing
+end
+
+
 """
 Update position, velocity and force of particles affected by a
 force 'forcefield(particle[i], particle[j])' after a time interval 'dt'
@@ -20,6 +36,7 @@ function step!(
   return particles
 end
 
+
 function first_step!(
     particles::AbstractVector{Particle{N,T}},
     forcefield,
@@ -34,20 +51,29 @@ function first_step!(
   step!(particles, forcefield, dt)
 end
 
-function update_forces!(particles::AbstractVector{Particle{N,T}}, forcefield) where {N, T<:AbstractFloat}
 
-  for particle in particles
-    particle.force = zeros(SVector{N,T})
+"""
+  function advance_sim!(particles, forcefield, dt, Δt)
+
+Advances the simulation a time t ∈ [Δt, Δt+dt).
+Returns t - Δt.
+"""
+function advance_sim!(
+    particles::AbstractVector{Particle{N,T}},
+    forcefield,
+    dt,
+    Δt) where {N, T<:AbstractFloat}
+
+  Δt_partial = zero(dt)
+
+  while Δt_partial <= Δt
+    step!(particles, forcefield, dt)
+    Δt_partial += dt
   end
 
-  for i=1:(size(particles, 1)-1), j=(i+1):size(particles, 1)
-    forces = forcefield(particles[i], particles[j])
-    particles[i].force += forces[1]
-    particles[j].force += forces[2]
-  end
-
-  return nothing
+  return Δt_partial - Δt
 end
+
 
 function sim(
     particles::AbstractVector{Particle{N,T}},
@@ -79,12 +105,30 @@ function sim(
   if Δt_sim_per_frame < dt
     @warn "dt is too high or speedup to low."
   end
-  Δt_sim = 0
-  t1 = time()
 
+  t1 = time()
   first_step!(particles, forcefield, dt)
 
   while true
+    # TODO take into account the difference between Δt_partial and Δt
+    advance_sim!(particles, forcefield, dt, Δt_sim_per_frame)
+
+    scene[end][1] = [p.position for p in particles]
+    if save_video
+      recordframe!(io)
+    end
+
+    if limit_fps
+      t2 = time()
+      diff = frame_duration - (t2 - t1)
+      t1 = t2
+
+      if diff > 0.0
+        sleep(diff)
+      end
+
+    end
+
     if !scene.events.window_open.val
       if save_video
         save(save_path, io, framerate=fps)
@@ -93,29 +137,8 @@ function sim(
       return
     end
 
-    step!(particles, forcefield, dt)
-
-    Δt_sim += dt
-    if Δt_sim > Δt_sim_per_frame
-      scene[end][1] = [p.position for p in particles]
-      if save_video
-        recordframe!(io)
-      end
-
-      if limit_fps
-        t2 = time()
-        diff = frame_duration - (t2 - t1)
-        t1 = t2
-
-        if diff > 0.0
-          sleep(diff)
-        end
-
-      end
-
-      @info angular_momentum(particles)
-      Δt_sim = 0
-    end
+    @info angular_momentum(particles)
+    Δt_sim = 0
 
   end
 end
