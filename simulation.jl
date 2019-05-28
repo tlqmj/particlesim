@@ -103,7 +103,7 @@ function sim(
   frame_duration = 1.0/fps
   Δt_sim_per_frame = frame_duration*speedup
   if Δt_sim_per_frame < dt
-    @warn "dt is too high or speedup to low."
+    @warn "dt is too high or speedup too low."
   end
 
   limiter = Limiter(frame_duration)
