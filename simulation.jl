@@ -7,14 +7,31 @@ function step!(
     forcefield,
     dt::Real) where {N,T}
 
-  update_forces!(particles)
-
   for particle in particles
     particle.position += particle.velocity*dt
+  end
+
+  update_forces!(particles, forcefield)
+
+  for particle in particles
     particle.velocity += (particle.force/particle.mass)*dt
   end
 
   return particles
+end
+
+function first_step!(
+    particles::AbstractVector{Particle{N,T}},
+    forcefield,
+    dt::Real) where {N,T}
+
+  update_forces!(particles, forcefield)
+
+  for particle in particles
+    particle.velocity += (particle.force/particle.mass)*dt/2
+  end
+
+  step!(particles, forcefield, dt)
 end
 
 function update_forces!(particles::AbstractVector{Particle{N,T}}, forcefield) where {N, T<:AbstractFloat}
@@ -64,6 +81,8 @@ function sim(
   end
   Δt_sim = 0
   t1 = time()
+
+  first_step!(particles, forcefield, dt)
 
   while true
     if !scene.events.window_open.val
