@@ -106,7 +106,7 @@ function sim(
     @warn "dt is too high or speedup to low."
   end
 
-  t1 = time()
+  limiter = Limiter(frame_duration)
   first_step!(particles, forcefield, dt)
 
   while true
@@ -119,14 +119,7 @@ function sim(
     end
 
     if limit_fps
-      t2 = time()
-      diff = frame_duration - (t2 - t1)
-      t1 = t2
-
-      if diff > 0.0
-        sleep(diff)
-      end
-
+      limiter()
     end
 
     if !scene.events.window_open.val
@@ -141,4 +134,27 @@ function sim(
     Δt_sim = 0
 
   end
+end
+
+
+mutable struct Limiter
+  Δt::Float64
+  t₀::Float64
+end
+
+function Limiter(Δt::Number)
+  return Limiter(Float64(Δt), time())
+end
+
+function (lim::Limiter)()
+  t = time()
+  diff = lim.Δt - (t - lim.t₀)
+
+  if diff > 0.0
+    sleep(diff)
+  else
+    yield()
+  end
+
+  lim.t₀ = t
 end
