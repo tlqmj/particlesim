@@ -100,6 +100,10 @@ function sim(
     markersize = markersize,
     show_axis = true,
     transparency=true)
+
+  cameracontrols(scene).fov[] = 15
+  update_cam!(scene, cameracontrols(scene))
+
   display(scene)
 
   if save_video
