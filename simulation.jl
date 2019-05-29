@@ -88,6 +88,12 @@ function sim(
     markersize=10,
     glowwidth=markersize) where {N, T<:AbstractFloat}
 
+  frame_duration = 1.0/fps
+  Δt_sim_per_frame = frame_duration*speedup
+  t_overshoot = 0.0
+  2Δt_sim_per_frame < dt && error("dt is way too high. Decrease it, increase speedup or lower fps")
+  Δt_sim_per_frame < dt  && @warn "dt is too high. Decrease it, increase speedup or lower fps"
+
   scene = Scene(backgroundcolor = :black)
   scatter!(scene, [p.position for p in particles],
     glowwidth = glowwidth, glowcolor = (:white, glowalpha), color = :white,
@@ -100,18 +106,11 @@ function sim(
     io = VideoStream(scene; framerate = fps)
   end
 
-  frame_duration = 1.0/fps
-  Δt_sim_per_frame = frame_duration*speedup
-  if Δt_sim_per_frame < dt
-    @warn "dt is too high or speedup too low."
-  end
-
   limiter = Limiter(frame_duration)
   first_step!(particles, forcefield, dt)
 
   while true
-    # TODO take into account the difference between Δt_partial and Δt
-    advance_sim!(particles, forcefield, dt, Δt_sim_per_frame)
+    t_overshoot = advance_sim!(particles, forcefield, dt, Δt_sim_per_frame - t_overshoot)
 
     scene[end][1] = [p.position for p in particles]
     if save_video
