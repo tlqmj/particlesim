@@ -90,11 +90,11 @@ function sim(
 
   frame_duration = 1.0/fps
   Δt_sim_per_frame = frame_duration*speedup
-  t_overshoot = 0.0
+  t_overshoot = zero(dt - 1/fps)
   2Δt_sim_per_frame < dt && error("dt is way too high. Decrease it, increase speedup or lower fps")
   Δt_sim_per_frame < dt  && @warn "dt is too high. Decrease it, increase speedup or lower fps"
 
-  scene = Scene(backgroundcolor = :black)
+  scene = Scene(backgroundcolor = :black, resolution=(1920, 1080))
   scatter!(scene, [p.position for p in particles],
     glowwidth = glowwidth, glowcolor = (:white, glowalpha), color = :white,
     markersize = markersize,
@@ -110,9 +110,9 @@ function sim(
     io = VideoStream(scene; framerate = fps)
   end
 
+  t = 0
   limiter = Limiter(frame_duration)
   first_step!(particles, forcefield, dt)
-
   while true
     t_overshoot = advance_sim!(particles, forcefield, dt, Δt_sim_per_frame - t_overshoot)
 
@@ -133,7 +133,8 @@ function sim(
       return
     end
 
-    @info angular_momentum(particles)
+    t += frame_duration
+    @info "t = $t s."
   end
 end
 
